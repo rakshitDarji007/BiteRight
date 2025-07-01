@@ -1,12 +1,16 @@
+// src/App.jsx
+
 import React from 'react';
+// We need to import the components we use
 import { Box, Heading } from '@chakra-ui/react';
 
 function App() {
   return (
-    <Box p={4}>
-      <Heading as='h1' size="lg" color="blue.600">
-        Diet Planner App
-      </Heading>
+    // 'Box' is a container. We'll give it a red background ('bg')
+    // and some padding ('p')
+    <Box bg='tomato' w='100%' p={4} color='white'>
+      <Heading>Testing Chakra UI</Heading>
+      <p>If you can see this red box, it's working!</p>
     </Box>
   );
 }
