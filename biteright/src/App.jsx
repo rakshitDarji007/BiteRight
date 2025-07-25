@@ -4,13 +4,18 @@ import { UserProfileProvider, useUserProfile } from './contexts/UserProfileConte
 import Login from './components/Auth/Login';
 import Signup from './components/Auth/SignUp';
 import Onboarding from './components/Onboarding/Onboarding';
+import Dashboard from './components/Dashboard/Dashboard'; // Correctly imports the Dashboard
 
+/**
+ * This component contains the core logic for deciding what to show the user.
+ */
 function AppContent() {
   const [showAuth, setShowAuth] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
-  const { currentUser, logout } = useAuth();
+  const { currentUser } = useAuth();
   const { hasProfile, loading: profileLoading } = useUserProfile();
 
+  // Show a loading indicator while we check for a user and their profile
   if (profileLoading) {
     return (
       <div className="flex-center">
@@ -19,25 +24,20 @@ function AppContent() {
     );
   }
 
+  // If a user is logged in...
   if (currentUser) {
+    // ...and they have a profile, show the main Dashboard.
     if (hasProfile) {
-      return (
-        <div className="flex-center">
-          <div className="container text-center">
-            <h1 className="title-large">Your Personalized Plan</h1>
-            <p className="body-text mb-4">Welcome back, {currentUser.email}</p>
-            <button onClick={logout} className="apple-button-secondary">
-              Sign Out
-            </button>
-          </div>
-        </div>
-      );
+      return <Dashboard />;
     } else {
+      // ...but they don't have a profile, start the Onboarding flow.
       return <Onboarding />;
     }
   }
 
+  // If no user is logged in and they clicked "Get Started"...
   if (showAuth) {
+    // ...show the Login or Signup forms.
     return (
       <div className="flex-center">
         <div className="container">
@@ -51,6 +51,7 @@ function AppContent() {
     );
   }
 
+  // If no user is logged in, show the main landing page.
   return (
     <div className="flex-center">
       <div className="container">
@@ -68,6 +69,9 @@ function AppContent() {
   );
 }
 
+/**
+ * The main App component wraps everything in the necessary context providers.
+ */
 function App() {
   return (
     <AuthProvider>
