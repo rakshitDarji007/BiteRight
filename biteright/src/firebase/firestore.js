@@ -1,6 +1,13 @@
-import { db, functions } from './firebaseConfig';
-import { collection, query, where, getDocs, addDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
-import { httpsCallable } from "firebase/functions";
+import { db } from './firebaseConfig';
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+  serverTimestamp,
+  writeBatch
+} from 'firebase/firestore';
 import { getAuth } from "firebase/auth";
 
 export const getActiveMealPlan = async () => {
@@ -28,15 +35,25 @@ export const generateNewMealPlan = async (userProfile) => {
   const auth = getAuth();
   const user = auth.currentUser;
   if (!user) {
-    throw new Error("User not authenticated. Cannot generate a new plan.");
+    throw new Error("User not authenticated.");
   }
 
-  const generateMealPlan = httpsCallable(functions, 'generateMealPlan');
-
   try {
-    const result = await generateMealPlan({ profile: userProfile });
-    const newPlanData = result.data.plan;
+    const apiResponse = await fetch('/api/generateMealPlan', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ profile: userProfile }),
+    });
 
+    if (!apiResponse.ok) {
+      const errorData = await apiResponse.json();
+      throw new Error(errorData.error || 'The server responded with an error.');
+    }
+
+    const result = await apiResponse.json();
+    const newPlanData = result.plan;
     const q = query(
       collection(db, 'meal_plans'),
       where('user_id', '==', user.uid),
@@ -61,7 +78,7 @@ export const generateNewMealPlan = async (userProfile) => {
     return { id: docRef.id, plan_data: newPlanData, is_active: true };
 
   } catch (error) {
-    console.error("Error calling generateMealPlan function:", error.message);
-    throw new Error("Failed to generate a new meal plan from the AI service.");
+    console.error("Error generating new meal plan:", error.message);
+    throw new Error("Failed to generate a new meal plan.");
   }
 };
