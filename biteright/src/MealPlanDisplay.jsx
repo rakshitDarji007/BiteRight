@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Utensils, Plus, ShoppingCart } from 'lucide-react';
+import { Calendar, Utensils, Plus } from 'lucide-react';
 import { useAuth } from './contexts/AuthContext';
 import './index.css';
 
@@ -36,9 +36,9 @@ const MealPlanDisplay = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-md">
-        <div className="card text-center" style={{ width: '100%', maxWidth: '400px' }}>
-          <p>Loading your meal plan...</p>
+      <div className="flex items-center justify-center min-h-[calc(100vh-100px)] py-lg">
+        <div className="card text-center py-lg px-lg">
+          <p className="text-subhead">Loading your meal plan...</p>
         </div>
       </div>
     );
@@ -46,9 +46,9 @@ const MealPlanDisplay = () => {
 
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-md">
-        <div className="card text-center" style={{ width: '100%', maxWidth: '400px' }}>
-          <p className="text-error">{error}</p>
+      <div className="flex items-center justify-center min-h-[calc(100vh-100px)] py-lg">
+        <div className="card text-center py-lg px-lg">
+          <p className="text-error text-subhead">{error}</p>
           <button className="btn btn-primary mt-md" onClick={() => window.location.reload()}>
             Retry
           </button>
@@ -59,17 +59,17 @@ const MealPlanDisplay = () => {
 
   if (!mealPlan) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-md">
-        <div className="card text-center" style={{ width: '100%', maxWidth: '400px' }}>
-          <p>No meal plan available.</p>
+      <div className="flex items-center justify-center min-h-[calc(100vh-100px)] py-lg">
+        <div className="card text-center py-lg px-lg">
+          <p className="text-subhead">No meal plan available.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen p-md">
-      <header className="mb-lg">
+    <div className="py-md px-md">
+      <header className="mb-xl">
         <h1 className="text-title-1">Your Meal Plan</h1>
         <p className="text-subhead text-secondary mt-xs">{mealPlan.summary}</p>
         <div className="flex items-center text-caption-1 text-secondary mt-xs">
@@ -78,23 +78,31 @@ const MealPlanDisplay = () => {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg">
+      <div className="meal-grid mb-xl">
         {mealPlan.days.slice(0, 3).map((day) => (
-          <div key={day.day} className="card">
-            <h2 className="text-title-3 mb-md">Day {day.day}</h2>
+          <div key={day.day} className="card transition-all duration-200 hover:shadow-floating">
+            <h2 className="text-title-3 mb-lg pb-xs border-b border-gray-700">Day {day.day}</h2>
             <ul className="space-y-md">
               {day.meals.map((meal, index) => (
-                <li key={index} className="border-b border-gray-700 pb-md last:border-0 last:pb-0">
+                <li key={index} className="border-b border-gray-700 pb-md last:border-0 last:pb-0 transition-opacity duration-200 hover:opacity-90">
                   <div className="flex items-start">
-                    <div className="bg-primary bg-opacity-20 p-xs rounded mr-md flex-shrink-0">
+                    <div style={{
+                      backgroundColor: 'var(--color-primary)',
+                      opacity: '0.2',
+                      padding: 'var(--spacing-xs)',
+                      borderRadius: 'var(--border-radius-default)'
+                    }} className="flex-shrink-0 mr-md mt-xxs">
                       <Utensils size={16} className="text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-medium">{meal.type}: {meal.name}</h3>
+                      <h3 className="font-medium text-body">{meal.type}: {meal.name}</h3>
                       <p className="text-sm text-secondary mt-xs">{meal.description}</p>
                       {meal.calories && (
-                        <div className="text-caption-1 text-secondary mt-xs">
-                          Calories: {meal.calories} | Protein: {meal.protein || 'N/A'}g | Carbs: {meal.carbs || 'N/A'}g | Fat: {meal.fat || 'N/A'}g
+                        <div className="text-caption-1 text-tertiary mt-xs flex flex-wrap gap-xs">
+                          <span>Cal: {meal.calories}</span>
+                          {meal.protein && <span>Protein: {meal.protein}g</span>}
+                          {meal.carbs && <span>Carbs: {meal.carbs}g</span>}
+                          {meal.fat && <span>Fat: {meal.fat}g</span>}
                         </div>
                       )}
                     </div>
@@ -106,9 +114,9 @@ const MealPlanDisplay = () => {
         ))}
       </div>
 
-      <div className="flex justify-center mt-xl">
-        <button className="btn btn-primary flex items-center">
-          <Plus size={16} className="mr-xs" />
+      <div className="flex justify-center">
+        <button className="btn btn-primary flex items-center px-lg py-sm text-subhead">
+          <Plus size={18} className="mr-xs" />
           Generate New Plan
         </button>
       </div>

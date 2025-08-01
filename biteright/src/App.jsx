@@ -16,8 +16,8 @@ const AppDashboard = () => {
   const isOnboardingComplete = localStorage.getItem('onboarding_complete_for_user_' + currentUser?.uid);
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="p-md border-b border-gray-800">
+    <div className="flex flex-col min-h-screen">
+      <header className="py-md px-md border-b border-gray-800">
         <div className="container flex justify-between items-center">
           <h1 className="text-title-3 flex items-center">
             <Apple size={24} className="mr-xs text-primary" />
@@ -33,14 +33,18 @@ const AppDashboard = () => {
         </div>
       </header>
 
-      <main className="flex-grow p-md">
+      <main className="flex-grow py-md px-md">
         {isOnboardingComplete ? (
           <MealPlanDisplay />
         ) : (
-          <div className="flex items-center justify-center h-full">
+          <div className="flex items-center justify-center min-h-[calc(100vh-100px)]">
             <div className="card text-center" style={{ maxWidth: '600px', width: '100%' }}>
               <div className="flex justify-center mb-md">
-                <div style={{ backgroundColor: 'var(--color-surface)', padding: 'var(--spacing-md)', borderRadius: '50%' }}>
+                <div style={{
+                  backgroundColor: 'var(--color-surface)',
+                  padding: 'var(--spacing-md)',
+                  borderRadius: 'var(--border-radius-circle)'
+                }}>
                   <Apple size={48} color="var(--color-primary)" />
                 </div>
               </div>
