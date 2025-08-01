@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Target, Utensils, AlertTriangle } from 'lucide-react';
 import { useAuth } from './contexts/AuthContext';
+import { generateMealPlan } from './utils/geminiApi';
 import './index.css';
 
 const GoalsStep = ({ onNext, formData, setFormData }) => {
@@ -121,7 +122,7 @@ const PreferencesStep = ({ onNext, onBack, formData, setFormData }) => {
   );
 };
 
-const RestrictionsStep = ({ onSubmit, onBack, formData, setFormData }) => {
+const RestrictionsStep = ({ onSubmit, onBack, formData, setFormData, isGenerating }) => {
   const [allergyInput, setAllergyInput] = useState('');
   const commonAllergies = ['Milk', 'Eggs', 'Fish', 'Shellfish', 'Tree Nuts', 'Peanuts', 'Wheat', 'Soybeans'];
 
@@ -153,6 +154,7 @@ const RestrictionsStep = ({ onSubmit, onBack, formData, setFormData }) => {
                 type="button"
                 onClick={() => handleRemoveAllergy(allergy)}
                 className="ml-xs text-error hover:text-opacity-80"
+                disabled={isGenerating}
               >
                 ×
               </button>
@@ -166,12 +168,14 @@ const RestrictionsStep = ({ onSubmit, onBack, formData, setFormData }) => {
             onChange={(e) => setAllergyInput(e.target.value)}
             placeholder="Add an allergy (e.g., Eggs)"
             className="input-field flex-grow mr-xs"
-            onKeyPress={(e) => e.key === 'Enter' && handleAddAllergy(allergyInput)}
+            onKeyPress={(e) => e.key === 'Enter' && !isGenerating && handleAddAllergy(allergyInput)}
+            disabled={isGenerating}
           />
           <button
             type="button"
             className="btn btn-secondary"
             onClick={() => handleAddAllergy(allergyInput)}
+            disabled={isGenerating}
           >
             Add
           </button>
@@ -188,15 +192,21 @@ const RestrictionsStep = ({ onSubmit, onBack, formData, setFormData }) => {
           onChange={(e) => setFormData({ ...formData, otherRestrictions: e.target.value })}
           placeholder="Any other dietary restrictions or dislikes? (e.g., No spicy food, Prefer organic)"
           className="input-field w-full min-h-[100px]"
+          disabled={isGenerating}
         />
       </div>
 
       <div className="flex justify-between">
-        <button type="button" className="btn btn-secondary" onClick={onBack}>
+        <button type="button" className="btn btn-secondary" onClick={onBack} disabled={isGenerating}>
           Back
         </button>
-        <button type="button" className="btn btn-primary" onClick={onSubmit}>
-          Finish & Generate Plan
+        <button 
+          type="button" 
+          className="btn btn-primary" 
+          onClick={onSubmit} 
+          disabled={isGenerating}
+        >
+          {isGenerating ? 'Generating...' : 'Finish & Generate Plan'}
         </button>
       </div>
     </div>
@@ -212,6 +222,7 @@ const Onboarding = () => {
     allergies: [],
     otherRestrictions: '',
   });
+  const [isGenerating, setIsGenerating] = useState(false);
   const navigate = useNavigate();
   const { currentUser } = useAuth();
 
@@ -227,18 +238,36 @@ const Onboarding = () => {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     console.log("Onboarding completed with ", formData);
-    alert("Onboarding data submitted! (Simulated)\nGenerating meal plan...");
+    
+    setIsGenerating(true);
+    try {
+        const userDataForApi = {
+            ...formData,
+            userId: currentUser?.uid
+        };
 
-    if (currentUser?.uid) {
-      localStorage.setItem('onboarding_complete_for_user_' + currentUser.uid, 'true');
-      console.log("Onboarding marked as complete in localStorage for user:", currentUser.uid);
-    } else {
-      console.warn("User ID not available in Onboarding component, cannot set flag.");
+        const generatedPlan = await generateMealPlan(userDataForApi);
+
+        localStorage.setItem('current_meal_plan_for_user_' + currentUser.uid, JSON.stringify(generatedPlan));
+        
+        if (currentUser?.uid) {
+            localStorage.setItem('onboarding_complete_for_user_' + currentUser.uid, 'true');
+            console.log("Onboarding marked as complete in localStorage for user:", currentUser.uid);
+        } else {
+            console.warn("User ID not available in Onboarding component, cannot set flag.");
+        }
+        
+        alert("Meal plan generated successfully! (Simulated)");
+        navigate('/'); 
+        
+    } catch (error) {
+        console.error("Error generating meal plan:", error);
+        alert("Failed to generate meal plan. Please try again.");
+    } finally {
+        setIsGenerating(false);
     }
-
-    navigate('/'); 
   };
 
   return (
@@ -275,6 +304,7 @@ const Onboarding = () => {
             onBack={handleBack}
             formData={formData}
             setFormData={setFormData}
+            isGenerating={isGenerating}
           />
         )}
       </div>

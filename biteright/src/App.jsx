@@ -19,48 +19,41 @@ const AppDashboard = () => {
     <div className="flex min-h-screen flex-col">
       <header className="p-md border-b border-gray-800">
         <div className="container flex justify-between items-center">
-          <h1 className="text-title-3">BiteRight</h1>
+          <h1 className="text-title-3 flex items-center">
+            <Apple size={24} className="mr-xs text-primary" />
+            BiteRight
+          </h1>
           <div className="flex items-center space-x-4">
-            <span className="text-subhead text-secondary">Hi, {currentUser?.name || currentUser?.email}</span>
+            <span className="text-subhead text-secondary hidden sm:inline">Hi, {currentUser?.name || currentUser?.email}</span>
             <button onClick={handleLogout} className="btn btn-secondary flex items-center">
               <LogOut size={16} className="mr-xs" />
-              Log Out
+              <span className="hidden sm:inline">Log Out</span>
             </button>
           </div>
         </div>
       </header>
 
-      <main className="flex-grow flex items-center justify-center p-md">
-        <div className="card text-center" style={{ maxWidth: '600px', width: '100%' }}>
-          <div className="flex justify-center mb-md">
-            <div style={{ backgroundColor: 'var(--color-surface)', padding: 'var(--spacing-md)', borderRadius: '50%' }}>
-              <Apple size={48} color="var(--color-primary)" />
-            </div>
-          </div>
-          <h2 className="text-title-2 mb-md">Welcome to BiteRight</h2>
-          
-          {isOnboardingComplete ? (
-            <>
-              <p className="text-subhead text-secondary mb-lg">
-                Your personalized meal plan dashboard will be here.
-              </p>
-              <p className="text-secondary mb-md">User Email: {currentUser?.email}</p>
-              <p className="text-secondary mb-md">User Name: {currentUser?.name}</p>
-              <button className="btn btn-primary mt-md" onClick={() => alert("Display meal plan here")}>
-                View My Meal Plan
-              </button>
-            </>
-          ) : (
-            <>
+      <main className="flex-grow p-md">
+        {isOnboardingComplete ? (
+          <MealPlanDisplay />
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <div className="card text-center" style={{ maxWidth: '600px', width: '100%' }}>
+              <div className="flex justify-center mb-md">
+                <div style={{ backgroundColor: 'var(--color-surface)', padding: 'var(--spacing-md)', borderRadius: '50%' }}>
+                  <Apple size={48} color="var(--color-primary)" />
+                </div>
+              </div>
+              <h2 className="text-title-2 mb-md">Welcome to BiteRight</h2>
               <p className="text-subhead text-secondary mb-lg">
                 Let's get started by setting up your profile.
               </p>
               <button className="btn btn-primary mt-md" onClick={() => navigate('/onboarding')}>
                 Complete Onboarding
               </button>
-            </>
-          )}
-        </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
@@ -70,6 +63,7 @@ import Signup from './Signup';
 import Login from './Login';
 import ProtectedRoute from './components/ProtectedRoute';
 import Onboarding from './Onboarding';
+import MealPlanDisplay from './MealPlanDisplay';
 
 function App() {
   return (
