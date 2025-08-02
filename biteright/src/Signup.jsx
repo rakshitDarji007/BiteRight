@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, User } from 'lucide-react';
 import { useAuth } from './contexts/AuthContext';
+import './index.css';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -11,16 +12,18 @@ const Signup = () => {
     confirmPassword: ''
   });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { signup } = useAuth();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(false);
 
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match.");
@@ -30,28 +33,34 @@ const Signup = () => {
         setError("Password must be at least 6 characters.");
         return;
     }
+    if (!formData.email) {
+        setError("Please enter an email address.");
+        return;
+    }
 
-    console.log("Signup attempt with:", formData);
-    const simulatedUserData = {
-      uid: 'user_' + Date.now(),
-      name: formData.name,
-      email: formData.email
-    };
+    setLoading(true);
 
-    login(simulatedUserData);
-    localStorage.setItem('onboarding_complete_for_user_' + simulatedUserData.uid, 'false');
-    alert("Signup successful! (Simulated)");
-    navigate('/onboarding');
+    try {
+      const data = await signup(formData.email, formData.password);
+      console.log("Signup successful:", data);
+      alert("Signup initiated! Please check your email for confirmation (if enabled). You might need to confirm your email before logging in.");
+
+    } catch (error) {
+      console.error("Signup failed:", error);
+      setError(error.message || "Failed to create an account. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-     <div className="flex min-h-screen items-center justify-center p-md">
+    <div className="flex min-h-screen items-center justify-center p-md">
       <div className="card" style={{ width: '100%', maxWidth: '400px' }}>
         <h2 className="text-title-3 text-center mb-lg">Create Your Account</h2>
         {error && <div className="mb-md p-sm text-error bg-error bg-opacity-20 rounded">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="mb-md">
-            <label htmlFor="name" className="block text-subhead text-secondary mb-xs">Name</label>
+            <label htmlFor="name" className="block text-subhead text-secondary mb-xs">Name (Optional)</label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <User size={18} className="text-secondary" />
@@ -62,9 +71,9 @@ const Signup = () => {
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                required
                 className="input-field pl-10"
                 placeholder="Your full name"
+                disabled={loading}
               />
             </div>
           </div>
@@ -84,6 +93,7 @@ const Signup = () => {
                 required
                 className="input-field pl-10"
                 placeholder="you@example.com"
+                disabled={loading}
               />
             </div>
           </div>
@@ -103,6 +113,7 @@ const Signup = () => {
                 required
                 className="input-field pl-10"
                 placeholder="Create a password"
+                disabled={loading}
               />
             </div>
           </div>
@@ -122,12 +133,17 @@ const Signup = () => {
                 required
                 className="input-field pl-10"
                 placeholder="Confirm your password"
+                disabled={loading}
               />
             </div>
           </div>
 
-          <button type="submit" className="btn btn-primary w-full">
-            Sign Up
+          <button
+            type="submit"
+            className="btn btn-primary w-full"
+            disabled={loading}
+          >
+            {loading ? 'Signing Up...' : 'Sign Up'}
           </button>
         </form>
         <p className="text-center text-secondary mt-md">

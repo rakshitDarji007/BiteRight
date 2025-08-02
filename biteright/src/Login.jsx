@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock } from 'lucide-react';
 import { useAuth } from './contexts/AuthContext';
+import './index.css';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -9,6 +10,7 @@ const Login = () => {
     password: ''
   });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
 
@@ -16,32 +18,25 @@ const Login = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
     if (!formData.email || !formData.password) {
         setError("Please fill in all fields.");
+        setLoading(false);
         return;
     }
 
-    console.log("Login attempt with:", formData);
-    const simulatedUserData = {
-      uid: 'user_' + Date.now(),
-      name: formData.email.split('@')[0],
-      email: formData.email
-    };
-
-    login(simulatedUserData);
-
-    const isOnboardingComplete = localStorage.getItem('onboarding_complete_for_user_' + simulatedUserData.uid);
-    if (isOnboardingComplete === 'true') {
-      console.log("Onboarding complete, navigating to dashboard.");
-      navigate('/');
-    } else {
-      console.log("Onboarding not complete, navigating to onboarding.");
-      localStorage.setItem('onboarding_complete_for_user_' + simulatedUserData.uid, 'false');
-      navigate('/onboarding');
+    try {
+      const data = await login(formData.email, formData.password);
+      console.log("Login successful:", data);
+    } catch (error) {
+      console.error("Login failed:", error);
+      setError(error.message || "Failed to log in. Please check your credentials.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -66,6 +61,7 @@ const Login = () => {
                 required
                 className="input-field pl-10"
                 placeholder="you@example.com"
+                disabled={loading}
               />
             </div>
           </div>
@@ -85,12 +81,17 @@ const Login = () => {
                 required
                 className="input-field pl-10"
                 placeholder="Your password"
+                disabled={loading}
               />
             </div>
           </div>
 
-          <button type="submit" className="btn btn-primary w-full">
-            Log In
+          <button
+            type="submit"
+            className="btn btn-primary w-full"
+            disabled={loading}
+          >
+            {loading ? 'Logging In...' : 'Log In'}
           </button>
         </form>
         <p className="text-center text-secondary mt-md">
