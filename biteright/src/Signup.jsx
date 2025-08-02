@@ -43,7 +43,7 @@ const Signup = () => {
     try {
       const data = await signup(formData.email, formData.password);
       console.log("Signup successful:", data);
-      alert("Signup initiated! Please check your email for confirmation (if enabled). You might need to confirm your email before logging in.");
+      alert("Signup initiated!.");
 
     } catch (error) {
       console.error("Signup failed:", error);
