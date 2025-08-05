@@ -2,7 +2,6 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { supabase } from '../supabaseClient';
 
 const AuthContext = createContext();
-
 export function useAuth() {
   return useContext(AuthContext);
 }
@@ -11,6 +10,7 @@ export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
+
   const fetchUser = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
     setSession(session);
@@ -20,11 +20,33 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     fetchUser();
+
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log(`Supabase auth event: ${event}`);
         setSession(session);
         setCurrentUser(session?.user || null);
+
+        if (session?.user) {
+          try {
+            const { data: profile, error } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single();
+
+            if (error && error.code !== 'PGRST116') {
+              console.error("Error fetching profile in AuthContext:", error);
+            } else if (profile) {
+              console.log("Profile fetched in AuthContext:", profile);
+            } else {
+              console.log("No profile found for user in AuthContext, might be created later.");
+            }
+          } catch (err) {
+            console.error("Unexpected error fetching profile in AuthContext:", err);
+          }
+        }
+
         setLoading(false);
       }
     );

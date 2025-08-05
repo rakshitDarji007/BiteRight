@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, User } from 'lucide-react';
 import { useAuth } from './contexts/AuthContext';
+import { supabase } from './supabaseClient';
 import './index.css';
 
 const Signup = () => {
@@ -23,28 +24,41 @@ const Signup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setLoading(false);
+    setLoading(true);
 
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match.");
+      setLoading(false);
       return;
     }
     if (formData.password.length < 6) {
         setError("Password must be at least 6 characters.");
+        setLoading(false);
         return;
     }
     if (!formData.email) {
         setError("Please enter an email address.");
+        setLoading(false);
         return;
     }
-
-    setLoading(true);
 
     try {
       const data = await signup(formData.email, formData.password);
       console.log("Signup successful:", data);
-      alert("Signup initiated!.");
 
+      if (data.user && formData.name.trim() !== '') {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({ id: data.user.id, name: formData.name.trim(), updated_at: new Date() }, { onConflict: 'id' });
+
+        if (profileError) {
+          console.error("Error creating/updating profile with name:", profileError);
+        } else {
+          console.log("Profile name potentially updated/created.");
+        }
+      }
+
+      alert("Signup initiated! You might need to confirm your email before logging in.");
     } catch (error) {
       console.error("Signup failed:", error);
       setError(error.message || "Failed to create an account. Please try again.");

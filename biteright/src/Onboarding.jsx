@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Target, Utensils, AlertTriangle } from 'lucide-react';
 import { useAuth } from './contexts/AuthContext';
+import { supabase } from './supabaseClient'; // Import supabase client
 import { generateMealPlan } from './utils/geminiApi';
 import './index.css';
 
@@ -143,7 +144,7 @@ const RestrictionsStep = ({ onSubmit, onBack, formData, setFormData, isGeneratin
   return (
     <div>
       <h2 className="text-title-2 text-center mb-lg">Your Restrictions</h2>
-      
+
       <div className="mb-lg">
         <label className="block text-subhead text-secondary mb-xs">Allergies</label>
         <div className="flex flex-wrap gap-xs mb-md">
@@ -200,10 +201,10 @@ const RestrictionsStep = ({ onSubmit, onBack, formData, setFormData, isGeneratin
         <button type="button" className="btn btn-secondary" onClick={onBack} disabled={isGenerating}>
           Back
         </button>
-        <button 
-          type="button" 
-          className="btn btn-primary" 
-          onClick={onSubmit} 
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={onSubmit}
           disabled={isGenerating}
         >
           {isGenerating ? 'Generating...' : 'Finish & Generate Plan'}
@@ -240,7 +241,7 @@ const Onboarding = () => {
 
   const handleSubmit = async () => {
     console.log("Onboarding completed with ", formData);
-    
+
     setIsGenerating(true);
     try {
         const userDataForApi = {
@@ -251,17 +252,29 @@ const Onboarding = () => {
         const generatedPlan = await generateMealPlan(userDataForApi);
 
         localStorage.setItem('current_meal_plan_for_user_' + currentUser.uid, JSON.stringify(generatedPlan));
-        
-        if (currentUser?.uid) {
-            localStorage.setItem('onboarding_complete_for_user_' + currentUser.uid, 'true');
-            console.log("Onboarding marked as complete in localStorage for user:", currentUser.uid);
-        } else {
-            console.warn("User ID not available in Onboarding component, cannot set flag.");
+
+        try {
+            const { error: updateError } = await supabase
+              .from('profiles')
+              .update({
+                onboarding_complete: true,
+                onboarding_data: formData,
+                updated_at: new Date()
+              })
+              .eq('id', currentUser.uid);
+
+            if (updateError) {
+              console.error("Error updating profile for onboarding completion:", updateError);
+            } else {
+              console.log("User profile updated: onboarding complete.");
+            }
+        } catch (updateErr) {
+            console.error("Unexpected error updating profile:", updateErr);
         }
-        
-        alert("Meal plan generated successfully! (Simulated)");
-        navigate('/'); 
-        
+
+        alert("Meal plan generated successfully!");
+        navigate('/');
+
     } catch (error) {
         console.error("Error generating meal plan:", error);
         alert("Failed to generate meal plan. Please try again.");
