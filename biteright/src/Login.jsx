@@ -32,6 +32,8 @@ const Login = () => {
     try {
       const data = await login(formData.email, formData.password);
       console.log("Login successful:", data);
+      navigate('/');
+
     } catch (error) {
       console.error("Login failed:", error);
       setError(error.message || "Failed to log in. Please check your credentials.");
