@@ -12,19 +12,16 @@ const AppDashboard = () => {
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
 
   useEffect(() => {
-    console.log("AppDashboard useEffect running, currentUser:", currentUser);
     const checkOnboardingStatus = async () => {
         setCheckingOnboarding(true);
         if (!currentUser?.uid) {
-            console.log("No currentUser.uid, setting onboarding to incomplete");
             setIsOnboardingComplete(false);
             setCheckingOnboarding(false);
             return;
         }
 
         try {
-            console.log("Fetching onboarding status for:", currentUser.uid);
-            const { data: profile, error } = await supabase
+            const {  profile, error } = await supabase
               .from('profiles')
               .select('onboarding_complete')
               .eq('id', currentUser.uid)
@@ -32,21 +29,18 @@ const AppDashboard = () => {
 
             if (error) {
                 if (error.code === 'PGRST116') {
-                    console.log("Profile not found for user");
                     setIsOnboardingComplete(false);
                 } else {
                     console.error("Error checking onboarding status:", error);
                     setIsOnboardingComplete(false);
                 }
             } else {
-                console.log("Profile found, onboarding_complete:", profile?.onboarding_complete);
                 setIsOnboardingComplete(profile?.onboarding_complete === true);
             }
         } catch (err) {
             console.error("Unexpected error checking onboarding status:", err);
             setIsOnboardingComplete(false);
         } finally {
-            console.log("Finished checking onboarding status");
             setCheckingOnboarding(false);
         }
     };
@@ -82,7 +76,7 @@ const AppDashboard = () => {
             BiteRight
           </h1>
           <div className="flex items-center space-x-4">
-            <span className="text-subhead text-secondary hidden sm:inline">Hi, {currentUser?.user_metadata?.name || currentUser?.email}</span>
+            <span className="text-subhead text-secondary hidden sm:inline">Hi, {currentUser?.user_metadata?.full_name || currentUser?.email}</span>
             <button onClick={handleLogout} className="btn btn-secondary flex items-center">
               <LogOut size={16} className="mr-xs" />
               <span className="hidden sm:inline">Log Out</span>
@@ -134,7 +128,6 @@ function App() {
         <Routes>
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login />} />
-          
           <Route path="/" element={
             <ProtectedRoute>
               <AppDashboard />
@@ -145,7 +138,6 @@ function App() {
                <Onboarding />
              </ProtectedRoute>
           } />
-
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </div>
