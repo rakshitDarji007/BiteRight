@@ -1,13 +1,11 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { supabase } from '../../src/supabaseClient';
-import { getServerSupabaseClient } from '../../src/supabaseClient';
-
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const MODEL_NAME = "gemini-2.0-flash";
 export async function POST(request) {
     try {
         const userData = await request.json();
         console.log("Got the meal plan data!!");
+
         if (!userData.userId) {
             return new Response(JSON.stringify({ error: "Missing userID" }), {
                 status: 400,
@@ -106,11 +104,45 @@ export async function POST(request) {
                 headers: { 'Content-Type': 'application/json' }
             });
         }
+
+        const supabaseUrl = process.env.VITE_SUPABASE_URL;
+        const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+        if (supabaseUrl && supabaseServiceRoleKey) {
+            const { createClient } = await import('@supabase/supabase-js');
+            const serverSupabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+
+            const { data, error } = await serverSupabase
+                .from('meal_plans')
+                .insert([
+                    {
+                        user_id: userData.userId,
+                        plan_data: mealPlanData,
+                        goals: userData.goal ? [userData.goal] : [],
+                        restrictions: {
+                            dietary_preferences: userData.dietaryPreferences || [],
+                            allergies: userData.allergies || [],
+                            other_restrictions: userData.otherRestrictions || ''
+                        },
+                        is_active: true
+                    }
+                ]);
+
+            if (error) {
+                console.error('Error saving meal plan to Supabase:', error);
+            } else {
+                console.log('Meal plan saved to Supabase successfully.');
+            }
+        } else {
+            console.warn('Supabase environment variables not found. Skipping database save.');
+        }
+
         return new Response(JSON.stringify({ mealPlan: mealPlanData }), {
             status: 200,
             headers: { 'Content-Type': 'application/json' }
         });
     } catch (error) {
+        console.error("Error in /api/generate-meal-plan:", error); // Added more detailed logging
         return new Response(JSON.stringify({
             error: 'error when generating meal plan',
             message: error.message
